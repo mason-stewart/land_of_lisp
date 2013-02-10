@@ -1,6 +1,6 @@
 ; describe locations
 (defparameter *nodes* '((living-room (you are in the living-room. 
-                                      a wizard is asleep on the couch.))
+                                      Chandler is asleep on the couch.))
                         (garden (you are in a beautiful garden. 
                                  there is a well in front of you.))
                         (attic (you are in the attic. 
@@ -72,7 +72,7 @@
 
 ; check inventory
 (defun inventory ()
-  (cons 'items- (objects-at 'body *objects* *object-locations*)))
+  (cons 'items#\: (objects-at 'body *objects* *object-locations*)))
 
 (defun say-hello ()
   (princ "Please type your name: ")
@@ -94,3 +94,37 @@
     (flet ((quote-it (x)
               (list 'quote x)))
       (cons (car cmd) (mapcar #'quote-it (cdr cmd))))))
+
+(defparameter *allowed-commands* '(look walk pickup inventory))
+
+(defun game-eval (sexp)
+  (if (member (car sexp) *allowed-commands*)
+    (eval sexp)
+    '(i do not know that command)))
+
+(defun tweak-text (lst caps lit)
+  (when lst
+  (let ((item (car lst))
+        (rest (cdr lst)))
+          ; Just chomp and keep moving if its space
+    (cond ((eql item #\space) (cons item (tweak-text rest caps lit)))
+          ; If you encounter one of these, capitalize the next character
+          ((member item '(#\! #\? #\.)) (cons item (tweak-text rest t lit)))
+          ; If you encounter a quote, flip lit
+          ((eql item #\") (tweak-text rest caps (not lit)))
+          ; if lit, don't change the case
+          (lit (cons item (tweak-text rest nil lit)))
+          ; caps if specified
+          (caps (cons (char-upcase item) (tweak-text rest nil lit)))
+          ; otherwise, downcase
+          (t (cons (char-downcase item) (tweak-text rest nil nil)))))))
+
+(defun game-print (lst)
+  (princ (coerce (tweak-text (coerce (string-trim "() "
+                                                   (prin1-to-string lst))
+                                     'list)
+                             t
+                             nil)
+                 'string))
+  (fresh-line))
+
