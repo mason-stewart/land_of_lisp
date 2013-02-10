@@ -73,3 +73,24 @@
 ; check inventory
 (defun inventory ()
   (cons 'items- (objects-at 'body *objects* *object-locations*)))
+
+(defun say-hello ()
+  (princ "Please type your name: ")
+  (let ((name (read-line)))
+    (princ "Nice to meet you, ")
+    (princ name)))
+
+
+; custom repl
+(defun game-repl ()
+  (let ((cmd (game-read)))
+    (unless (eq (car cmd) 'quit)
+      (game-print (game-eval cmd))
+      (game-repl))))
+
+(defun game-read ()
+  (let ((cmd (read-from-string
+                (concatenate 'string "(" (read-line) ")"))))
+    (flet ((quote-it (x)
+              (list 'quote x)))
+      (cons (car cmd) (mapcar #'quote-it (cdr cmd))))))
